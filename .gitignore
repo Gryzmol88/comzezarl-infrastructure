@@ -1,0 +1,25 @@
+# Sekrety
+.env
+.env.*
+
+# Backupy
+backups/
+*.sql
+*.sql.gz
+*.zip
+*.tar.gz
+
+# Logi
+logs/
+*.log
+
+# System
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Docker override
+docker-compose.override.yml
