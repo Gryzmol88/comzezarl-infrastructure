@@ -1,6 +1,6 @@
 # Comzezarl Infrastructure
 
-WordPress + MariaDB running in Docker.
+WordPress + MariaDB running in Docker .
 
 ## Start
 
