@@ -5,9 +5,17 @@ set -e
 source .env
 
 BACKUP_DIR="backups/$(date +%Y-%m-%d-%H%M)"
-WP_VOLUME="comzezarl-local_comzezarl_wp_data"
+
+WP_VOLUME=$(docker volume ls --format "{{.Name}}" | grep "_comzezarl_wp_data$" | head -n 1)
+
+if [ -z "$WP_VOLUME" ]; then
+  echo "Nie znaleziono wolumenu WordPress."
+  exit 1
+fi
 
 mkdir -p "$BACKUP_DIR"
+
+echo "WordPress volume: $WP_VOLUME"
 
 echo "Creating database backup..."
 docker exec comzezarl-db mariadb-dump \
