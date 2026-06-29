@@ -1,42 +1,65 @@
 services:
+  # Baza danych dla WordPressa
   comzezarl-db:
     image: mariadb:11
     container_name: comzezarl-db
     restart: unless-stopped
+
+    # Zmienne środowiskowe wczytywane z pliku .env
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+    # Wolumen z danymi bazy danych
+    # Dzięki temu baza nie znika po usunięciu kontenera
     volumes:
       - comzezarl_db_data:/var/lib/mysql
+
+    # Prywatna sieć projektu
     networks:
       - comzezarl_net
 
+  # Aplikacja WordPress
   comzezarl-wp:
     image: wordpress:php8.3-apache
     container_name: comzezarl-wp
     restart: unless-stopped
+
+    # Port lokalny:
+    # localhost:${WORDPRESS_PORT} -> kontener:80
     ports:
       - "${WORDPRESS_PORT}:80"
+
+    # Dane połączenia WordPressa z bazą danych
     environment:
       WORDPRESS_DB_HOST: comzezarl-db:3306
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
       WORDPRESS_DB_USER: ${MYSQL_USER}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
       WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
+
+    # WordPress startuje po bazie danych
+    depends_on:
+      - comzezarl-db
+
+    # Wolumen z plikami WordPressa
+    # Bind mount z konfiguracją PHP zwiększającą limit uploadu
     volumes:
       - comzezarl_wp_data:/var/www/html
       - ./php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
-    depends_on:
-      - comzezarl-db
+
     networks:
       - comzezarl_net
 
+# Named volumes zarządzane przez Dockera
 volumes:
   comzezarl_db_data:
   comzezarl_wp_data:
 
+# Prywatna sieć kontenerów
 networks:
   comzezarl_net:
     driver: bridge
+
