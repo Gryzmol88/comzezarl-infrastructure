@@ -2,8 +2,11 @@
 
 set -e
 
+LOG_FILE="logs/verify.log"
+source scripts/common.sh
+
 if [ -z "$1" ]; then
-  echo "Usage: ./scripts/verify-backup.sh backups/YYYY-MM-DD-HHMM"
+  log "Usage: ./scripts/verify-backup.sh backups/YYYY-MM-DD-HHMM"
   exit 1
 fi
 
@@ -11,7 +14,7 @@ BACKUP_DIR="$1"
 MANIFEST="$BACKUP_DIR/manifest.json"
 
 if [ ! -f "$MANIFEST" ]; then
-  echo "Missing manifest.json in: $BACKUP_DIR"
+  log_error "Missing manifest.json in: $BACKUP_DIR"
   exit 1
 fi
 
@@ -19,12 +22,12 @@ DB_FILE="$BACKUP_DIR/backup-db.sql"
 WP_FILE="$BACKUP_DIR/backup-wp-files.tar.gz"
 
 if [ ! -f "$DB_FILE" ]; then
-  echo "Missing file: $DB_FILE"
+  log_error "Missing file: $DB_FILE"
   exit 1
 fi
 
 if [ ! -f "$WP_FILE" ]; then
-  echo "Missing file: $WP_FILE"
+  log_error "Missing file: $WP_FILE"
   exit 1
 fi
 
@@ -34,29 +37,29 @@ EXPECTED_WP_SHA=$(python3 -c "import json; print(json.load(open('$MANIFEST'))['f
 ACTUAL_DB_SHA=$(sha256sum "$DB_FILE" | awk '{print $1}')
 ACTUAL_WP_SHA=$(sha256sum "$WP_FILE" | awk '{print $1}')
 
-echo "Verifying backup: $BACKUP_DIR"
-echo
+log "Verifying backup: $BACKUP_DIR"
+
 
 FAILED=0
 
 if [ "$EXPECTED_DB_SHA" = "$ACTUAL_DB_SHA" ]; then
-  echo "Database: OK"
+  log "Database: OK"
 else
-  echo "Database: FAILED"
+  log_error "Database: FAILED"
   FAILED=1
 fi
 
 if [ "$EXPECTED_WP_SHA" = "$ACTUAL_WP_SHA" ]; then
-  echo "WordPress files: OK"
+  log "WordPress files: OK"
 else
-  echo "WordPress files: FAILED"
+  log_error "WordPress files: FAILED"
   FAILED=1
 fi
 
 echo
 
 if [ "$FAILED" -eq 0 ]; then
-  echo "Backup verification PASSED"
+  log "Backup verification PASSED"
 
   python3 - "$MANIFEST" <<'PY'
 import json
@@ -83,7 +86,7 @@ PY
 
   exit 0
 else
-  echo "Backup verification FAILED"
+  log_error "Backup verification FAILED"
 
   python3 - "$MANIFEST" <<'PY'
 import json

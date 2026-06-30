@@ -2,7 +2,9 @@
 
 set -e
 
-source .env
+LOG_FILE="logs/backup.log"
+source scripts/common.sh
+load_env
 
 PROJECT_NAME=${PROJECT_NAME:-comzezarl}
 PROJECT_VERSION=${PROJECT_VERSION:-1.0.0}
@@ -12,18 +14,6 @@ BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-180}
 BACKUP_REMOTE_ENABLED=${BACKUP_REMOTE_ENABLED:-false}
 BACKUP_CREATE_MANIFEST=${BACKUP_CREATE_MANIFEST:-true}
 
-LOG_DIR="logs"
-LOG_FILE="$LOG_DIR/backup.log"
-
-mkdir -p "$LOG_DIR"
-
-log() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $1" | tee -a "$LOG_FILE"
-}
-
-log_error() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $1" | tee -a "$LOG_FILE" >&2
-}
 
 START_TIME=$(date +%s)
 
