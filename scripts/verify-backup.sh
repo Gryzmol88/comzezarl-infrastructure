@@ -57,8 +57,56 @@ echo
 
 if [ "$FAILED" -eq 0 ]; then
   echo "Backup verification PASSED"
+
+  python3 - "$MANIFEST" <<'PY'
+import json
+import sys
+from datetime import datetime, timezone
+
+manifest_path = sys.argv[1]
+
+with open(manifest_path, "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+data.setdefault("status", {})
+data["status"]["verified"] = True
+
+data["verification"] = {
+    "result": "passed",
+    "verified_at": datetime.now(timezone.utc).astimezone().isoformat()
+}
+
+with open(manifest_path, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+    f.write("\n")
+PY
+
   exit 0
 else
   echo "Backup verification FAILED"
+
+  python3 - "$MANIFEST" <<'PY'
+import json
+import sys
+from datetime import datetime, timezone
+
+manifest_path = sys.argv[1]
+
+with open(manifest_path, "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+data.setdefault("status", {})
+data["status"]["verified"] = False
+
+data["verification"] = {
+    "result": "failed",
+    "verified_at": datetime.now(timezone.utc).astimezone().isoformat()
+}
+
+with open(manifest_path, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+    f.write("\n")
+PY
+
   exit 1
 fi
