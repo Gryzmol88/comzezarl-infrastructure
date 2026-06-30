@@ -90,6 +90,9 @@ if [ "$BACKUP_CREATE_MANIFEST" = "true" ]; then
 EOF
 fi
 
+echo "Verifying backup..."
+./scripts/verify-backup.sh "$BACKUP_DIR"
+
 find backups \
   -mindepth 1 \
   -type d \
