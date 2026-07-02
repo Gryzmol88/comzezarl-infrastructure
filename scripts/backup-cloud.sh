@@ -11,6 +11,7 @@ BACKUP_REMOTE_NAME=${BACKUP_REMOTE_NAME:-gdrive}
 BACKUP_REMOTE_PATH=${BACKUP_REMOTE_PATH:-Comzezarl/backups}
 BACKUP_REMOTE_CLEANUP=${BACKUP_REMOTE_CLEANUP:-false}
 BACKUP_REMOTE_RETENTION_DAYS=${BACKUP_REMOTE_RETENTION_DAYS:-365}
+BACKUP_REMOTE_PROVIDER=${BACKUP_REMOTE_PROVIDER:-Google Drive}
 
 if [ -z "$1" ]; then
   log_error "Usage: ./scripts/backup-cloud.sh backups/YYYY-MM-DD-HHMM"
@@ -43,7 +44,7 @@ rclone copy "$BACKUP_DIR" "$REMOTE_TARGET" \
 
 log "Verifying remote upload..."
 
-REMOTE_FILE_COUNT=$(rclone ls "$REMOTE_TARGET" | wc -l)
+REMOTE_FILE_COUNT=$(rclone lsf "$REMOTE_TARGET" | wc -l)
 
 if [ "$REMOTE_FILE_COUNT" -lt 3 ]; then
   log_error "Remote upload verification failed. Expected at least 3 files, found: $REMOTE_FILE_COUNT"
@@ -51,23 +52,23 @@ if [ "$REMOTE_FILE_COUNT" -lt 3 ]; then
 fi
 
 log "Remote upload verified."
-
 log "Updating manifest cloud status..."
 
-python3 - "$MANIFEST" "$REMOTE_TARGET" <<'PY'
+python3 - "$MANIFEST" "$REMOTE_TARGET" "$BACKUP_REMOTE_PROVIDER" <<'PY'
 import json
 import sys
 from datetime import datetime, timezone
 
 manifest_path = sys.argv[1]
 remote_target = sys.argv[2]
+provider = sys.argv[3]
 
 with open(manifest_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 
 data["cloud"] = {
     "enabled": True,
-    "provider": "Google Drive",
+    "provider": provider,
     "uploaded": True,
     "uploaded_at": datetime.now(timezone.utc).astimezone().isoformat(),
     "remote": remote_target

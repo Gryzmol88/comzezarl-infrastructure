@@ -10,18 +10,94 @@ Projekt jest przygotowany do uruchomienia lokalnie oraz do późniejszej migracj
 
 ---
 
-# Struktura projektu
+# Roadmap
 
-```text
+
+✅ Docker Compose
+
+✅ WordPress
+
+✅ Backup
+
+✅ Restore
+
+✅ GitHub
+
+✅ Dokumentacja
+
+⬜ Raspberry Pi
+
+⬜ SSH
+
+⬜ Cloudflare Tunnel
+
+⬜ HTTPS
+
+⬜ Automatyczne backupy
+
+⬜ Google Drive Backup
+
+⬜ Monitoring
+
+⬜ Produkcja
+
+---
+
+
+# Diagram architektury
+                     Internet
+                         │
+                         ▼
+                localhost:8080
+                         │
+                         ▼
+                 Docker Compose
+                         │
+         ┌───────────────┴───────────────┐
+         │                               │
+         ▼                               ▼
+  WordPress Container            MariaDB Container
+  comzezarl-wp                   comzezarl-db
+         │                               │
+         │                               │
+         ▼                               ▼
+  Volume: wp_data               Volume: db_data
+         │                               │
+         └───────────────┬───────────────┘
+                         │
+                         ▼
+                    Backup Script
+                         │
+                         ▼
+      backups/YYYY-MM-DD-HHMM/
+      ├── backup-db.sql
+      └── backup-wp-files.tar.gz
+
+---
+
+
+## Struktura projektu
+
 comzezarl-local/
-├── backups/
-├── .env
-├── .env.example
-├── .gitignore
-├── backup.sh
-├── docker-compose.yaml
-└── README.md
-```
+│
+├── docker-compose.yaml      # Definicja całego środowiska Docker
+├── .env.example             # Przykładowa konfiguracja
+├── .gitignore               # Pliki ignorowane przez Git
+├── README.md                # Dokumentacja projektu
+│
+├── backup.sh                # Automatyczne tworzenie backupu
+├── restore.sh               # Automatyczne odtwarzanie backupu
+│
+├── php/
+│   └── uploads.ini          # Konfiguracja PHP (limit uploadu)
+│
+└── backups/
+    └── YYYY-MM-DD-HHMM/
+        ├── backup-db.sql
+        └── backup-wp-files.tar.gz
+
+---
+
 
 ## Opis plików
 

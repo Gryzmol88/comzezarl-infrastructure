@@ -46,6 +46,13 @@ require_command() {
   fi
 }
 
+require_env() {
+  if [ -z "${!1}" ]; then
+    log_error "Environment variable not set: $1"
+    exit 1
+  fi
+}
+
 load_env() {
   if [ ! -f ".env" ]; then
     log_error ".env file not found"
@@ -53,4 +60,8 @@ load_env() {
   fi
 
   source .env
+
+  require_env MYSQL_DATABASE
+  require_env MYSQL_USER
+  require_env MYSQL_PASSWORD
 }

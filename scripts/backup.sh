@@ -129,6 +129,8 @@ fi
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
 
+VERIFICATION_RESULT="PASSED"
+
 log "========================================="
 log "Backup summary"
 log "Project: $PROJECT_NAME"
@@ -137,7 +139,7 @@ log "Backup ID: $BACKUP_ID"
 log "Database size: $DB_SIZE"
 log "WordPress files size: $WP_SIZE"
 log "Total size: $TOTAL_SIZE"
-log "Verification: PASSED"
+log "Verification: $VERIFICATION_RESULT"
 log "Duration: ${DURATION}s"
 log "Backup completed: $BACKUP_DIR"
 log "========================================="
