@@ -18,6 +18,11 @@ if [ ! -f "$MANIFEST" ]; then
   exit 1
 fi
 
+if ! python3 -m json.tool "$MANIFEST" >/dev/null 2>&1; then
+  log_error "Invalid manifest.json format: $MANIFEST"
+  exit 1
+fi
+
 DB_FILE="$BACKUP_DIR/backup-db.sql"
 WP_FILE="$BACKUP_DIR/backup-wp-files.tar.gz"
 
@@ -56,7 +61,6 @@ else
   FAILED=1
 fi
 
-echo
 
 if [ "$FAILED" -eq 0 ]; then
   log "Backup verification PASSED"
