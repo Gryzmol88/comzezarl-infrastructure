@@ -51,7 +51,7 @@ docker run --rm \
   -v "$WP_VOLUME":/data \
   -v "$(pwd)/$BACKUP_DIR":/backup \
   alpine \
-  tar czf /backup/backup-wp-files.tar.gz /data
+  sh -c "cd /data && tar czf /backup/backup-wp-files.tar.gz ."
 
 DB_SIZE=$(du -h "$BACKUP_DIR/backup-db.sql" | cut -f1)
 WP_SIZE=$(du -h "$BACKUP_DIR/backup-wp-files.tar.gz" | cut -f1)
@@ -121,8 +121,9 @@ find backups \
   -exec rm -rf {} \;
 
 if [ "$BACKUP_REMOTE_ENABLED" = "true" ]; then
-  log "Remote backup enabled."
-  log "Cloud upload will be implemented in the next step."
+  log "Uploading backup to cloud..."
+  ./scripts/backup-cloud.sh "$BACKUP_DIR"
+  log "Cloud upload completed."
 fi
 
 END_TIME=$(date +%s)
