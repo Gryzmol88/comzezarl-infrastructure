@@ -27,11 +27,6 @@ services:
     container_name: comzezarl-wp
     restart: unless-stopped
 
-    # Port lokalny:
-    # localhost:${WORDPRESS_PORT} -> kontener:80
-    ports:
-      - "${WORDPRESS_PORT}:80"
-
     # Dane połączenia WordPressa z bazą danych
     environment:
       WORDPRESS_DB_HOST: comzezarl-db:3306
@@ -49,6 +44,51 @@ services:
     volumes:
       - comzezarl_wp_data:/var/www/html
       - ./php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+
+    networks:
+      - comzezarl_net
+  
+  # Reverse Proxy
+  comzezarl-nginx:
+    image: nginx:stable-alpine
+    container_name: comzezarl-nginx
+    restart: unless-stopped
+
+    depends_on:
+      - comzezarl-wp
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+    networks:
+      - comzezarl_net
+
+  # Narzędzie administracyjne WordPress (WP-CLI)
+  # Uruchamiane tylko na żądanie, np. do search-replace
+  wpcli:
+    image: wordpress:cli
+    container_name: comzezarl-wpcli
+
+    profiles:
+      - tools
+
+    depends_on:
+      - comzezarl-db
+
+    environment:
+      WORDPRESS_DB_HOST: comzezarl-db:3306
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
+
+    volumes:
+      - comzezarl_wp_data:/var/www/html
+
+    working_dir: /var/www/html
 
     networks:
       - comzezarl_net
