@@ -64,4 +64,6 @@ load_env() {
   require_env MYSQL_DATABASE
   require_env MYSQL_USER
   require_env MYSQL_PASSWORD
+  require_env WORDPRESS_TABLE_PREFIX
+  require_env SITE_DOMAIN
 }
