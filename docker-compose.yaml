@@ -73,6 +73,7 @@ services:
   wpcli:
     image: wordpress:cli
     container_name: comzezarl-wpcli
+    user: "33:33"
 
     profiles:
       - tools
@@ -81,6 +82,7 @@ services:
       - comzezarl-db
 
     environment:
+      HOME: /tmp
       WORDPRESS_DB_HOST: comzezarl-db:3306
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
       WORDPRESS_DB_USER: ${MYSQL_USER}
