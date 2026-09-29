@@ -106,7 +106,7 @@ docker exec -i comzezarl-db mariadb \
 
 log "Reading current URL..."
 
-OLD_URL=$(
+OLD_HOME_URL=$(
 docker exec comzezarl-db mariadb \
     -h 127.0.0.1 \
     -N \
@@ -121,21 +121,88 @@ WHERE option_name='home';
 "
 )
 
-if [ -z "$OLD_URL" ]; then
-    log_error "Nie udało się odczytać aktualnego URL z bazy danych."
+OLD_SITE_URL=$(
+docker exec comzezarl-db mariadb \
+    -h 127.0.0.1 \
+    -N \
+    -B \
+    -u"$MYSQL_USER" \
+    -p"$MYSQL_PASSWORD" \
+    "$MYSQL_DATABASE" \
+    -e "
+SELECT option_value
+FROM \`${OPTIONS_TABLE}\`
+WHERE option_name='siteurl';
+"
+)
+
+if [ -z "$OLD_HOME_URL" ] || [ -z "$OLD_SITE_URL" ]; then
+    log_error "Nie udało się odczytać home lub siteurl z bazy danych."
     exit 1
 fi
 
-log "Old URL: $OLD_URL"
-log "New URL: $WP_SITE_URL"
+log "Old home URL: $OLD_HOME_URL"
+log "Old siteurl: $OLD_SITE_URL"
+log "Target URL: $WP_SITE_URL"
 
 log "Updating WordPress URL..."
 
 docker compose run --rm wpcli search-replace \
-    "$OLD_URL" \
+    "$OLD_HOME_URL" \
     "$WP_SITE_URL" \
     --all-tables \
     --skip-columns=guid
+
+if [ "$OLD_SITE_URL" != "$OLD_HOME_URL" ]; then
+    log "siteurl differs from home - updating additional URL..."
+
+    docker compose run --rm wpcli search-replace \
+        "$OLD_SITE_URL" \
+        "$WP_SITE_URL" \
+        --all-tables \
+        --skip-columns=guid
+fi
+
+log "Setting WordPress home and siteurl..."
+
+docker compose run --rm wpcli option update home "$WP_SITE_URL"
+docker compose run --rm wpcli option update siteurl "$WP_SITE_URL"
+
+log "Checking for remaining old URL references..."
+
+REMAINING_OLD_URL=$(
+    docker compose run --rm wpcli wp search-replace \
+        "$OLD_HOME_URL" \
+        "$WP_SITE_URL" \
+        --all-tables \
+        --skip-columns=guid \
+        --dry-run \
+        --format=count
+)
+
+if [ "$REMAINING_OLD_URL" -gt 0 ]; then
+    log "WARNING: Found $REMAINING_OLD_URL remaining references to old URL: $OLD_HOME_URL"
+else
+    log "Old URL references: 0"
+fi
+
+if [ "$OLD_SITE_URL" != "$OLD_HOME_URL" ]; then
+    REMAINING_OLD_SITE_URL=$(
+        docker compose run --rm wpcli wp search-replace \
+            "$OLD_SITE_URL" \
+            "$WP_SITE_URL" \
+            --all-tables \
+            --skip-columns=guid \
+            --dry-run \
+            --format=count
+    )
+
+    if [ "$REMAINING_OLD_SITE_URL" -gt 0 ]; then
+        log "WARNING: Found $REMAINING_OLD_SITE_URL remaining references to old siteurl: $OLD_SITE_URL"
+    else
+        log "Old siteurl references: 0"
+    fi
+fi
 
 log "Starting WordPress..."
 
