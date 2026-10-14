@@ -7,7 +7,7 @@ source scripts/common.sh
 load_env
 
 PROJECT_NAME=${PROJECT_NAME:-comzezarl}
-PROJECT_VERSION=${PROJECT_VERSION:-1.0.0}
+PROJECT_VERSION=$(git describe --tags --long --always 2>/dev/null || echo "unknown")
 PROJECT_ENV=${PROJECT_ENV:-local}
 
 BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-180}
