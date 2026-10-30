@@ -42,16 +42,6 @@ rclone copy "$BACKUP_DIR" "$REMOTE_TARGET" \
   --drive-pacer-min-sleep 2s \
   --drive-pacer-burst 100
 
-log "Verifying remote upload..."
-
-REMOTE_FILE_COUNT=$(rclone lsf "$REMOTE_TARGET" | wc -l)
-
-if [ "$REMOTE_FILE_COUNT" -lt 3 ]; then
-  log_error "Remote upload verification failed. Expected at least 3 files, found: $REMOTE_FILE_COUNT"
-  exit 1
-fi
-
-log "Remote upload verified."
 log "Updating manifest cloud status..."
 
 python3 - "$MANIFEST" "$REMOTE_TARGET" "$BACKUP_REMOTE_PROVIDER" <<'PY'
@@ -87,15 +77,21 @@ rclone copy "$MANIFEST" "$REMOTE_TARGET" \
   --drive-pacer-min-sleep 2s \
   --drive-pacer-burst 50
 
+log "Final verification of cloud backup..."
+
+if ! rclone check "$BACKUP_DIR" "$REMOTE_TARGET" --download; then
+  log_error "Final cloud backup verification FAILED."
+  exit 1
+fi
+
+log "Final cloud backup verification PASSED."
+
 if [ "$BACKUP_REMOTE_CLEANUP" = "true" ]; then
-  log "Removing remote backups older than ${BACKUP_REMOTE_RETENTION_DAYS} days..."
+  log "Running automatic cloud backup rotation..."
 
-  rclone delete "$BACKUP_REMOTE_NAME:$BACKUP_REMOTE_PATH" \
-    --min-age "${BACKUP_REMOTE_RETENTION_DAYS}d"
+  bash scripts/rotate-cloud-backups.sh --delete
 
-  rclone rmdirs "$BACKUP_REMOTE_NAME:$BACKUP_REMOTE_PATH"
-
-  log "Remote cleanup completed."
+  log "Cloud backup rotation completed."
 else
   log "Remote cleanup skipped."
 fi
